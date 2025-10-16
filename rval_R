@@ -1,0 +1,150 @@
+dd <- "~/bruno/new/interbull/herd/hh/final/"
+aa <- "Group_rval_grval.txt"
+sce_type <- c("rand", "best", "thresh001", "thresh001_g")
+use_type <- c("Scenario 1", "Scenario 2", "Scenario 3", "Scenario 4")
+
+all_data <- list()
+count <- 1
+
+for (j in 1:length(sce_type)) {
+  for (i in 0:6) {
+    path <- if (i == 0) paste0(dd, "gen", i, "/", aa) else paste0(dd, "gen", i, "/", sce_type[j], "/", aa)
+    tmp_dat <- read.table(path, header = TRUE)
+    tmp_dat$gen <- i
+    tmp_dat$sceType <- use_type[j]
+    all_data[[count]] <- tmp_dat
+    cat("number of rows for gen", i, "and sceType", sce_type[j], "is", nrow(tmp_dat), "\n")
+    count <- count + 1
+  }
+}
+
+sce_all <- do.call(rbind, all_data)
+
+all_lpi <- list()
+count <- 1
+
+for (j in sce_type) {
+  path <- paste0(dd, "gen6/", j, "/", "lpi")
+  if (file.exists(path)) {
+    tmp_dat <- read.table(path, header = TRUE)
+    tmp_dat$sceType <- j
+    all_lpi[[count]] <- tmp_dat
+    cat("Loaded:", path, "with", nrow(tmp_dat), "rows\n")
+    count <- count + 1
+  } else {
+    cat("File missing:", path, "\n")
+  }
+}
+
+sce_lpi <- do.call(rbind, all_lpi)
+sce_all$lpi <- sce_lpi$LPI[match(sce_all$ID, sce_lpi$IID)]
+
+sce_all <- sce_all[sce_all$activeCODE == 1,]
+
+sce_to_plot <- sce_all %>%
+    group_by(gen, sceType) %>%
+    summarise(
+         Total = n(),
+         AvgR = mean(Rval),
+         AvgG = mean(GRval),
+         LPI = mean(lpi)
+    ) %>%
+  ungroup()
+sce_to_plot <- sce_to_plot[sce_to_plot$gen < 6,]
+
+ggplot(sce_to_plot, aes(x = gen, y = LPI, color = sceType, shape = sceType, group = sceType)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  xlab("Génération") +
+  ylab("Moyennes des parents (IPV)") +
+  scale_x_continuous(breaks = seq(0, 6, 1)) +
+  scale_color_manual(values = c(
+    "Scenario 1" = "#003c4f",
+    "Scenario 2" = "#FF0000",
+    "Scenario 3" = "#1B9E77",
+    "Scenario 4" = "#D95F02"
+  )) +
+  scale_shape_manual(values = c(16, 17, 15, 18)) +
+  theme_bw(base_family = "Times New Roman") +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "right",  
+    legend.key = element_blank(),
+    legend.text = element_text(size = 13, face = "bold"),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.box.margin = margin(5, 5, 5, 15),  # space between plot and legend
+    axis.text.x = element_text(size = 12, face = "bold"),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+
+ggplot(sce_to_plot, aes(x = gen, y = AvgR, color = sceType, shape = sceType, group = sceType)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  xlab("Génération") +
+  ylab("Valeur moyenne des relations généalogiques") +
+  scale_x_continuous(breaks = seq(0, 6, 1)) +
+  scale_color_manual(values = c(
+    "Scenario 1" = "#003c4f",
+    "Scenario 2" = "#FF0000",
+    "Scenario 3" = "#1B9E77",
+    "Scenario 4" = "#D95F02"
+  )) +
+  scale_shape_manual(values = c(16, 17, 15, 18)) +
+  theme_bw(base_family = "Times New Roman") +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "right",  
+    legend.key = element_blank(),
+    legend.text = element_text(size = 13, face = "bold"),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.box.margin = margin(5, 5, 5, 15),  # space between plot and legend
+    axis.text.x = element_text(size = 12, face = "bold"),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggplot(sce_to_plot, aes(x = gen, y = AvgG, color = sceType, shape = sceType, group = sceType)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  xlab("Génération") +
+  ylab("Valeur moyenne de la relation génomique") +
+  scale_x_continuous(breaks = seq(0, 6, 1)) +
+  scale_color_manual(values = c(
+    "Scenario 1" = "#003c4f",
+    "Scenario 2" = "#FF0000",
+    "Scenario 3" = "#1B9E77",
+    "Scenario 4" = "#D95F02"
+  )) +
+  scale_shape_manual(values = c(16, 17, 15, 18)) +
+  theme_bw(base_family = "Times New Roman") +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "right",  
+    legend.key = element_blank(),
+    legend.text = element_text(size = 13, face = "bold"),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.box.margin = margin(5, 5, 5, 15),  # space between plot and legend
+    axis.text.x = element_text(size = 12, face = "bold"),
+    axis.text.y = element_text(size = 12, face = "bold"),
+    axis.title.x = element_text(size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "bold"),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(color = "black")
+  )
